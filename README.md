@@ -1,0 +1,22 @@
+## Laboratory 3: 
+3D Computational Modeling: DEM–Vector Integration and GeoJSON Service Delivery 
+
+## Overview: 
+Laboratory 3 focuses on transitioning from planar spatial analysis to three-dimensional (3D) computational modeling by integrating raster and vector data. Unlike simple 2.5D visualization, this exercise requires to construct LineString geometries where each vertex includes z value derived from sampling elevation data from a Digital Elevation Model (DEM). The technical workflow involves road vectors from a PostGIS database using GeoPandas, while the DEM is loaded directly from a GeoTIFF file using Rasterio. To ensure the 3D model accurately captures terrain variation, students must perform densification which is a process of inserting new vertices along the road lines at fixed intervals,wherein in this exercise is 10meters.
+
+## How to run analysis.py
+1.  Activate the virtual environment 
+2. Run analysis.py to unify various data sources into a cohesive 3D spatial model and to handle the transformation of these analytical results into a 3D GeoJSON format for export and service delivery, acting as the link between raw storage and interactive 3D visualization.
+
+## Outputs expected in output
+ Elevation values from the DEM is expected to be injected into the coordinate tuples to create (x, y, z) geometries. The final expected output is a 3D GeoJSON file where the z values are preserved within the coordinate structure, allowing for realistic visualization in a QGIS 3D environment.
+
+## Milestones and reflections
+1. Hybrid IO Milestone Refection 
+Roads are retrieved from PostGIS because the vector data was structured, relational, and simplified to be managed in a database (pgAdmin). With the use of a spatial database like PostGIS, it allows for centralized storage, multi-user access, and the ability to perform relational queries.
+
+For the raster file, the DEM is loaded directly because raster data is grided hence it is likely easier for data to be managed in a singular file. Unlike vector data, rasters consist of massive grids of pixels, and loading directly via libraries enable for independent processing and elevation extraction without the overhead of database storage.
+
+Hybrid IO reflects real-world architecture by demonstrating different types of spatial data that require different storage logics. For example, vector data is stored in relational databases for management and querying while raster data is kept in optimized file formats for high-speed numeric processing. The use of python serves as bridge consists of commands, unifying these different storage models into a single representation where algorithms can operate on both simultaneously.
+
+At this stage, spatial analysis do not occur at the Hybrid IO stage. This part of the laboratory is focused on the Input component of the GIS workflow. It is to establish the connection to the data sources and verify that they represent the data correctly in Python before any 3D modeling or elevation sampling begins.
