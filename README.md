@@ -28,19 +28,10 @@ Densification id importance because it allows to insert new points at a fixed in
 
 Unlike symbolic extrusion where a 2D spatial structure is simply stretched upward by a single height value, spatial data containing true Z values means each individual vertex of the LineString is now a 3D coordinate (x, y, z). In a 3D viewer od QGIS, the road follows the actual rise and fall of the land surface rather than appearing as a flat lines separately.
 
-3. 
+3. Creation of 3D Output Layer
 --------------------------------------------------------------------------------------------------------------
-What is preserved when you export 3D geometry to GeoJSON?
-The coordinate structure is preserved. Each vertex is stored as a list of three numbers [longitude, latitude, altitude] (or [x, y, z]).
+The coordinate structure is preserved when 3D geometry is being exported to GeoJSON. Each vertex is stored as a list of three numbers [longitude, latitude, altitude] (or [x, y, z]). However, the 3D layer's structure features/characteristics not formally expressed. The GeoJSON standard (RFC 7946) only officially defines Point, LineString, and Polygon. It doesn't have a specific "3DLineString" type hence it just allows the coordinate array to have a third element.
 
-What is lost or not formally expressed?
-The 3D semantics are not formally expressed. The GeoJSON standard (RFC 7946) only officially defines Point, LineString, and Polygon. It doesn't have a specific "3DLineString" type; it just allows the coordinate array to have a third element.
+Nonetheless, GeoJSON is still label it as "LineString". This shows the difference between the actual values and the schema. It is designed for 2D web mapping, so it uses familiar 2D labels even when the content is 3D. In QGIS, it treats this as True 3D geometry because it reads the third coordinate of each vertex. Unlike 2.5D where a flat shape is extruded by one value, each point on the road spatial data has its own specific height.
 
-Why does GeoJSON still label it as "LineString"?
-This shows the difference between Data Content (the actual values) and Data Standard (the schema). The standard is designed for 2D web mapping, so it uses familiar 2D labels even when the content is 3D.
-
-How does this affect QGIS?
-QGIS treats this as True 3D geometry because it reads the third coordinate of each vertex. Unlike 2.5D (where a flat shape is extruded by one value), each point on your road has its own specific height.
-
-Alternative formats?
-To be more explicit, you could use GeoPackage (GPKG), PostGIS (Z-aware columns), or 3D Tiles / glTF for web streaming.
+To preserve 3D semantics more explicitly, I would prioritize 3D Tiles or glTF because they allow for efficient streaming of hierarchical spatial data and complex textures while maintaining detailed object attributes. Anotehr is the use of PostGIS. It provides spatial indexing and supports large quantities of geometries directly within a relational database. For high-fidelity portability, the GeoPackage format could also used because its serves as a tool to store 3D primitives or point clouds, ensuring that spatial relationships and metadata remain tightly coupled in a single, standardized file. 
