@@ -1,42 +1,38 @@
 import geopandas as gpd 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine 
 import rasterio
 import numpy as np
+import os
+import sys
 
-#helper function
-from shapely.geometry import LineString, MultiLineString 
-
-#Database connection parameters 
+# Database connection parameters 
 host = "localhost" 
 port = "5433" 
-dbname = "gme221_lab3" 
-user = "postgres"   
-password = "sangyan"
+dbname = "gme221_lab3" # Update with your actual database name 
+user = "postgres"    
+password = "sangyan" 
 conn_str = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}" 
-engine = create_engine(conn_str) 
+engine = create_engine(conn_str)
 
 # Minimal SQL query (no spatial processing) 
 sql_roads = "SELECT gid, geom FROM public.roads" 
-roads = gpd.read_postgis(sql_roads, engine, geom_col="geom") 
 
+roads = gpd.read_postgis(sql_roads, engine, geom_col="geom") 
 # IMPORTANT: attach CRS (GeoPandas often reads PostGIS geometry without CRS) 
-# Replace 3123 with the SRID from: SELECT ST_SRID(geom) FROM public.roads LIMIT 
-1; 
+# Replace 3123 with the SRID from: SELECT ST_SRID(geom) FROM public.roads LIMIT 1; 
 roads = roads.set_crs(epsg=3123, allow_override=True) 
-#print(roads.head()) 
-#print(roads.crs) 
-#print(roads.geometry.type.unique())
+print(roads.head()) 
+print(roads.crs) 
+print(roads.geometry.type.unique())
 
 dem = rasterio.open("data/dem.tif") 
+print("DEM CRS:", dem.crs) 
+print("DEM Resolution:", dem.res) 
+print("DEM Bounds:", dem.bounds) 
 
-#print("DEM CRS:", dem.crs) 
-#print("DEM Resolution:", dem.res) 
-#print("DEM Bounds:", dem.bounds)
-
+#Densification Control
 SAMPLE_STEP = 10  # meters (adjust later for sensitivity) 
-
-#helper function
-from shapely.geometry import LineString, MultiLineString
+from shapely.geometry import LineString, MultiLineString # Place this import at the top of your file with the other imports
 
 def densify_line(line: LineString, step: float): 
     """Return points sampled along a line at fixed distance spacing.""" 
@@ -44,8 +40,8 @@ def densify_line(line: LineString, step: float):
         return [] 
     distances = list(range(0, int(line.length), int(step))) 
     pts = [line.interpolate(d) for d in distances] 
-    pts.append(line.interpolate(line.length)) 
-    return pts 
+    pts.append(line.interpolate(line.length))  # ensure endpoint included 
+    return pts
 
 def explode_to_lines(geom): 
     if geom is None: 
@@ -56,13 +52,11 @@ def explode_to_lines(geom):
         return list(geom.geoms) 
     return [] 
 
-# Quick test of the sampling function on the first road geometry 
+ # Quick test of the sampling function on the first road geometry 
 #test_geom = roads.geometry.iloc[0] 
 #lines = explode_to_lines(test_geom) 
 #pts = densify_line(lines[0], SAMPLE_STEP) 
-#print("Sample points:", len(pts), "Line length:", lines[0].length) 
-
-#Quick test
+#print("Sample points:", len(pts), "Line length:", lines[0].length)  
 all_sample_points = [] 
 
 for geom in roads.geometry: 
@@ -70,16 +64,19 @@ for geom in roads.geometry:
     for line in parts: 
         pts = densify_line(line, SAMPLE_STEP) 
         for pt in pts: 
-            all_sample_points.append(pt) 
+            all_sample_points.append(pt)
 
 gdf_samples = gpd.GeoDataFrame( 
     geometry=all_sample_points, 
     crs=roads.crs 
 ) 
-gdf_samples.to_file("output/road_sample_points.shp") 
-#print("Densified sample points exported.") 
 
-band1 = dem.read(1)          
+gdf_samples.to_file("output/road_sample_points.shp") 
+
+print("Densified sample points exported.") 
+
+import numpy as np # Place this import at the top of your file with the other imports 
+band1 = dem.read(1)          # read once 
 nodata = dem.nodata 
 
 def sample_dem_z(x, y): 
@@ -100,19 +97,17 @@ for geom in roads.geometry:
         continue 
 
     line = parts[0]  # simplest: first part if MultiLineString 
-    pts = densify_line(line, SAMPLE_STEP) 
+    pts = densify_line(line, SAMPLE_STEP)
     coords_3d = [] 
     for pt in pts: 
         z = sample_dem_z(pt.x, pt.y) 
         if z is None: 
             continue 
         coords_3d.append((pt.x, pt.y, z)) 
-    
-    roads_3d.append(LineString(coords_3d) if len(coords_3d) >= 2 else None) 
+        roads_3d.append(LineString(coords_3d) if len(coords_3d) >= 2 else None) 
 
-roads["geom_3d"] = roads_3d 
-
-print("3D lines created:", roads["geom_3d"].notna().sum(), "/", len(roads)) 
+    roads["geom_3d"] = roads_3d
+print("3D lines created:", roads["geom_3d"].notna().sum(), "/", len(roads))
 
 valid_3d = roads["geom_3d"].dropna() 
 print("3D geometries created:", len(valid_3d), "/", len(roads)) 
@@ -120,3 +115,12 @@ print("3D geometries created:", len(valid_3d), "/", len(roads))
 # Verify Z exists (third coord) 
 first = valid_3d.iloc[0] 
 print("First 3D coord sample:", list(first.coords)[0]) 
+
+
+os.makedirs("output", exist_ok=True) 
+# keep only ONE geometry column for export 
+roads_3d_gdf = roads.dropna(subset=["geom_3d"]).copy() 
+roads_3d_gdf = roads_3d_gdf.drop(columns=["geom"], errors="ignore")   # drop the original geometry 
+roads_3d_gdf = roads_3d_gdf.set_geometry("geom_3d") 
+roads_3d_gdf.to_file("output/roads_3d.geojson", driver="GeoJSON") 
+print("Saved: output/roads_3d.geojson") 

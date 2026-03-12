@@ -27,3 +27,20 @@ At this stage, spatial analysis do not occur at the Hybrid IO stage. This part o
 Densification id importance because it allows to insert new points at a fixed interval as it was done in SAMPLE_STEP, ensuring the road ovelaid as part of the terrain or elevation model. However, CRS alignment is a must before processing due to the structures of the vector data (roads) and the raster data (DEM) where these must share the same spatial coordinate system for the sampling to be accurate. If the coordinates do not match, the sample_dem_z function will attempt to look up coordinates that do not exist or point to the wrong geographic location, resulting incorrect elevation values.
 
 Unlike symbolic extrusion where a 2D spatial structure is simply stretched upward by a single height value, spatial data containing true Z values means each individual vertex of the LineString is now a 3D coordinate (x, y, z). In a 3D viewer od QGIS, the road follows the actual rise and fall of the land surface rather than appearing as a flat lines separately.
+
+3. 
+--------------------------------------------------------------------------------------------------------------
+What is preserved when you export 3D geometry to GeoJSON?
+The coordinate structure is preserved. Each vertex is stored as a list of three numbers [longitude, latitude, altitude] (or [x, y, z]).
+
+What is lost or not formally expressed?
+The 3D semantics are not formally expressed. The GeoJSON standard (RFC 7946) only officially defines Point, LineString, and Polygon. It doesn't have a specific "3DLineString" type; it just allows the coordinate array to have a third element.
+
+Why does GeoJSON still label it as "LineString"?
+This shows the difference between Data Content (the actual values) and Data Standard (the schema). The standard is designed for 2D web mapping, so it uses familiar 2D labels even when the content is 3D.
+
+How does this affect QGIS?
+QGIS treats this as True 3D geometry because it reads the third coordinate of each vertex. Unlike 2.5D (where a flat shape is extruded by one value), each point on your road has its own specific height.
+
+Alternative formats?
+To be more explicit, you could use GeoPackage (GPKG), PostGIS (Z-aware columns), or 3D Tiles / glTF for web streaming.
