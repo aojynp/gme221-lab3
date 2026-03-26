@@ -2,7 +2,7 @@
 3D Computational Modeling: DEM–Vector Integration and GeoJSON Service Delivery 
 
 ## Overview: 
-Laboratory 3 focuses on transitioning from planar spatial analysis to three-dimensional (3D) computational modeling by integrating raster and vector data. Unlike simple 2.5D visualization, this exercise requires to construct LineString geometries where each vertex includes z value derived from sampling elevation data from a Digital Elevation Model (DEM). The technical workflow involves road vectors from a PostGIS database using GeoPandas, while the DEM is loaded directly from a GeoTIFF file using Rasterio. To ensure the 3D model accurately captures terrain variation, students must perform densification which is a process of inserting new vertices along the road lines at fixed intervals,wherein in this exercise is 10meters.
+Laboratory 3 focuses on transitioning from planar spatial analysis to three-dimensional (3D) computational modeling by integrating raster and vector data. Unlike simple 2.5D visualization, this exercise requires to construct LineString geometries where each vertex includes z value derived from sampling elevation data from a Digital Elevation Model (DEM). The technical workflow involves road vectors from a PostGIS database using GeoPandas, while the DEM is loaded directly from a GeoTIFF file using Rasterio. To ensure the 3D model accurately captures terrain variation, densification was performed, which is a process of inserting new vertices along the road lines at fixed intervals,wherein in this exercise is 10meters.
 
 ## How to run analysis.py
 1.  Activate the virtual environment 
